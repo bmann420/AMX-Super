@@ -2528,7 +2528,7 @@ public CmdRevive(id, level, cid)
 		
 		for(new i = 0; i < pnum; i++)
 			//ExecuteHam(Ham_Spawn, players[i]);
-			// should we use Ham_CS_RoundRespawn ¿? Don't know, but modified to ExecuteHamB
+			// should we use Ham_CS_RoundRespawn ï¿½? Don't know, but modified to ExecuteHamB
 			ExecuteHamB(Ham_Spawn, players[i])
 		
 		show_activity_key("AMX_SUPER_REVIVE_TEAM_CASE1", "AMX_SUPER_REVIVE_TEAM_CASE2", name, g_TeamNames[Team])
@@ -2542,7 +2542,7 @@ public CmdRevive(id, level, cid)
 		if(!player)
 			return PLUGIN_HANDLED
 
-		// should we use Ham_CS_RoundRespawn ¿? Don't know, but modified to ExecuteHamB
+		// should we use Ham_CS_RoundRespawn ï¿½? Don't know, but modified to ExecuteHamB
 		//ExecuteHam(Ham_Spawn, player)
 		ExecuteHamB(Ham_Spawn, player)
 		
@@ -3970,6 +3970,3 @@ public Cmd_GlowColors(id, level, cid)
 	
 	return PLUGIN_HANDLED;
 }
-/* AMXX-Studio Notes - DO NOT MODIFY BELOW HERE
-*{\\ rtf1\\ ansi\\ deff0{\\ fonttbl{\\ f0\\ fnil Tahoma;}}\n\\ viewkind4\\ uc1\\ pard\\ lang3082\\ f0\\ fs16 \n\\ par }
-*/
