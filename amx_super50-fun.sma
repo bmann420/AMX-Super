@@ -31,6 +31,19 @@
 */ 
 
 
+/*
+	Fixed bugs:
+	
+	- amx_revive didn't work with @ params.
+	- amx_godmode & amx_noclip didn't work with ADMIN_IMMUNITY flag.
+	- amx_heal set health instead of adding it to current health.
+	- amx_userorigin didn't work on dead / immune players.
+	
+	Drekes		06/10/2010:
+	- Updated amx_glow(2) with bitsums.		tnx Juann
+	- Changed godmode / noclip settings 	tnx Juann
+*/
+
  
 
 #include <amxmodx>
@@ -187,7 +200,8 @@ new const g_ColorNames[MAX_COLORS][] =
 };
 
 new g_GlowColor[33][4]
-	, bool: g_HasGlow[33]
+	// , bool: g_HasGlow[33]
+	// , g_HasGlow
 ;
 
 // sprites for effects
@@ -426,7 +440,7 @@ public CmdHeal(id, level, cid)
 				continue;
 			}
 			
-			set_user_health(Tempid, iHealth);
+			set_user_health(Tempid, get_user_health(Tempid) + iHealth);
 		}
 		
 		show_activity_key("AMX_SUPER_HEAL_TEAM_CASE1", "AMX_SUPER_HEAL_TEAM_CASE2", AdminName, iHealth, g_TeamNames[Team]);
@@ -439,7 +453,7 @@ public CmdHeal(id, level, cid)
 		
 		if(Tempid)
 		{
-			set_user_health(Tempid, iHealth);
+			set_user_health(Tempid, get_user_health(Tempid) + iHealth);
 			
 			new PlayerAuth[35];
 			get_user_authid(Tempid, PlayerAuth, charsmax(PlayerAuth));
@@ -613,7 +627,7 @@ public CmdUserOrigin(id, level, cid)
 	new Target[35];
 	read_argv(1, Target, charsmax(Target));
 
-	new Tempid = cmd_target(id, Target, CMDTARGET_OBEY_IMMUNITY | CMDTARGET_ALLOW_SELF | CMDTARGET_ONLY_ALIVE);
+	new Tempid = cmd_target(id, Target, CMDTARGET_ALLOW_SELF);
 	
 	if(Tempid)
 	{
@@ -1879,7 +1893,8 @@ public CmdGodmode(id, level, cid)
 		{
 			tempid = players[i];
 			
-			set_user_godmode(tempid, godmodesetting)
+			// set_user_godmode(tempid, godmodesetting)
+			set_user_godmode(tempid, !!godmodesetting);
 			
 			if (godmodesetting == 2)
 				g_iFlags[tempid] |= PERMGOD
@@ -1917,7 +1932,7 @@ public CmdGodmode(id, level, cid)
 	
 	else
 	{
-		new player = cmd_target(id, cmd, CMDTARGET_OBEY_IMMUNITY | CMDTARGET_ALLOW_SELF | CMDTARGET_ONLY_ALIVE)
+		new player = cmd_target(id, cmd, CMDTARGET_ALLOW_SELF | CMDTARGET_ONLY_ALIVE)
 		
 		if(!player)
 			return PLUGIN_HANDLED
@@ -1925,7 +1940,8 @@ public CmdGodmode(id, level, cid)
 		new name2[32]
 		get_user_name(player, name2, 31)
 		
-		set_user_godmode(player, godmodesetting)
+		// set_user_godmode(player, godmodesetting)
+		set_user_godmode(player, !!godmodesetting)
 		
 		if (godmodesetting == 2)
 			g_iFlags[player] |= PERMGOD
@@ -2207,7 +2223,8 @@ public CmdNoclip(id, level, cid)
 			tempid = players[i];
 			
 			//added
-			set_user_noclip(tempid, noclipsetting)
+			// set_user_noclip(tempid, noclipsetting)
+			set_user_noclip(tempid, !!noclipsetting);
 			
 			if (noclipsetting == 2)
 				g_iFlags[tempid] |= PERMNOCLIP
@@ -2244,7 +2261,7 @@ public CmdNoclip(id, level, cid)
 	}
 	else
 	{
-		new player = cmd_target(id, cmd, CMDTARGET_OBEY_IMMUNITY | CMDTARGET_ALLOW_SELF | CMDTARGET_ONLY_ALIVE)
+		new player = cmd_target(id, cmd, CMDTARGET_ALLOW_SELF | CMDTARGET_ONLY_ALIVE)
 		if(!player)
 			return PLUGIN_HANDLED
 
@@ -2255,7 +2272,8 @@ public CmdNoclip(id, level, cid)
 		get_user_authid(player, AuthId2, 35)
 		
 		// added
-		set_user_noclip(player, noclipsetting)
+		// set_user_noclip(player, noclipsetting)
+		set_user_noclip(player, !!noclipsetting);
 		
 		if (noclipsetting == 2)
 			g_iFlags[player] |= PERMNOCLIP;
@@ -2503,34 +2521,65 @@ public CmdRevive(id, level, cid)
 	
 	if(cmd[0] == '@')
 	{
-		new players[32], pnum, CmdTeam: Team
+		new players[32], pnum, iPlayer, CmdTeam: Team
+		get_players(players, pnum);
 		
+		/*
+			| Fixed bug:
+			| get_players() used a (alive only) flag to get the players.
+			| and because the e flag is bugged without the a flag, we have to check the team in the loop.
+		*/
 		switch(cmd[1])
 		{
 			case 't', 'T':	
 			{
-				get_players(players, pnum, "ae", "TERRORIST");
+				// get_players(players, pnum, "ae", "TERRORIST");
 				Team = T;
 			}
 			
 			case 'c', 'C':
 			{
-				get_players(players, pnum, "ae", "CT");
+				// get_players(players, pnum, "ae", "CT");
 				Team = CT;
 			}
 			
 			case 'a', 'A':
 			{
-				get_players(players, pnum, "a");
+				// get_players(players, pnum);
 				Team = ALL;
 			}
-		}
+		}		
+		
 		
 		for(new i = 0; i < pnum; i++)
+		{
+			iPlayer = players[i];
+			
+			switch(Team)
+			{
+				case T:
+				{
+					if(cs_get_user_team(iPlayer) == CS_TEAM_T)
+						ExecuteHamB(Ham_Spawn, iPlayer);
+				}
+				
+				case CT:
+				{
+					if(cs_get_user_team(iPlayer) == CS_TEAM_CT)
+						ExecuteHamB(Ham_Spawn, iPlayer);
+				}
+				
+				case ALL:
+				{
+					if(CS_TEAM_UNASSIGNED < cs_get_user_team(iPlayer) < CS_TEAM_SPECTATOR)
+						ExecuteHamB(Ham_Spawn, iPlayer);
+				}
+			}
+			
 			//ExecuteHam(Ham_Spawn, players[i]);
-			// should we use Ham_CS_RoundRespawn ï¿½? Don't know, but modified to ExecuteHamB
-			ExecuteHamB(Ham_Spawn, players[i])
-		
+			// should we use Ham_CS_RoundRespawn ¿? Don't know, but modified to ExecuteHamB
+			// ExecuteHamB(Ham_Spawn, players[i])
+		}
 		show_activity_key("AMX_SUPER_REVIVE_TEAM_CASE1", "AMX_SUPER_REVIVE_TEAM_CASE2", name, g_TeamNames[Team])
 	
 		console_print(id,"%L", LANG_PLAYER, "AMX_SUPER_REVIVE_TEAM_MSG", g_TeamNames[Team])
@@ -2542,7 +2591,7 @@ public CmdRevive(id, level, cid)
 		if(!player)
 			return PLUGIN_HANDLED
 
-		// should we use Ham_CS_RoundRespawn ï¿½? Don't know, but modified to ExecuteHamB
+		// should we use Ham_CS_RoundRespawn ¿? Don't know, but modified to ExecuteHamB
 		//ExecuteHam(Ham_Spawn, player)
 		ExecuteHamB(Ham_Spawn, player)
 		
@@ -3891,13 +3940,16 @@ public Cmd_Glow(id, level, cid)
 				g_GlowColor[tempid][2] = bluenum;
 				g_GlowColor[tempid][3] = alphanum;
 				
-				g_HasGlow[tempid] = true;
+				// g_HasGlow[tempid] = true;
+				g_iFlags[tempid] |= HASGLOW;
+				
 			}
 			
 			else
 			{
 				arrayset(g_GlowColor[tempid], 0, 4);
-				g_HasGlow[tempid] = false;
+				// g_HasGlow[tempid] = false;
+				g_iFlags[tempid] &= ~HASGLOW;
 			}
 			
 			set_user_rendering(tempid, kRenderFxGlowShell, rednum, greennum, bluenum, kRenderTransAlpha, alphanum);
@@ -3927,13 +3979,15 @@ public Cmd_Glow(id, level, cid)
 			g_GlowColor[tempid][2] = bluenum;
 			g_GlowColor[tempid][3] = alphanum;
 			
-			g_HasGlow[tempid] = true;
+			// g_HasGlow[tempid] = true;
+			g_iFlags[tempid] |= HASGLOW;
 		}
 		
 		else
 		{
 			arrayset(g_GlowColor[tempid], 0, sizeof(g_GlowColor[]));
-			g_HasGlow[tempid] = false;
+			// g_HasGlow[tempid] = false;
+			g_iFlags[tempid] &= ~HASGLOW;
 		}
 		
 		set_user_rendering(tempid, kRenderFxGlowShell, rednum, greennum, bluenum, kRenderTransAlpha, alphanum);
@@ -3970,3 +4024,6 @@ public Cmd_GlowColors(id, level, cid)
 	
 	return PLUGIN_HANDLED;
 }
+/* AMXX-Studio Notes - DO NOT MODIFY BELOW HERE
+*{\\ rtf1\\ ansi\\ deff0{\\ fonttbl{\\ f0\\ fnil Tahoma;}}\n\\ viewkind4\\ uc1\\ pard\\ lang3082\\ f0\\ fs16 \n\\ par }
+*/
