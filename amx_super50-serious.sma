@@ -1085,7 +1085,7 @@ public Cmd_Lock(id, level, cid)
 /* 11)	amx_unlock
  *----------------
 */
-public Cmd_UnLock(id, level, cid)
+public Cmd_Unlock(id, level, cid)
 {
 	if(!cmd_access(id, level, cid, 2))
 		return PLUGIN_HANDLED;
