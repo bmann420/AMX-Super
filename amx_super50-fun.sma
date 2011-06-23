@@ -42,6 +42,9 @@
 	Drekes		06/10/2010:
 	- Updated amx_glow(2) with bitsums.		tnx Juann
 	- Changed godmode / noclip settings 	tnx Juann
+	
+	Drekes		06/23/2010
+	- Fixed ADMIN_IMMUNITY issues.
 */
 
  
