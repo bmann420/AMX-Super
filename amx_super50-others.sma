@@ -10,6 +10,13 @@
 * -) AFK Manager
 */
 
+/*
+	Drekes		06/23/2011
+	- Added loading sounds.
+	- Added spectator bug fix.
+	
+*/
+
 #include <amxmodx>
 #include <amxmisc>
 #include <hamsandwich>
@@ -63,11 +70,13 @@ public plugin_init()
 	cEnterMsg 			= register_cvar("amx_enter_message", "%name% has joined!\nEnjoy the Server!\nCurrent Ranking is %rankpos%");
 	cLeaveMsg 			= register_cvar("amx_leave_message", "%name% has left!\nHope to see you back sometime."); 
 	cDamage				= register_cvar("bullet_damage", "1");
+	cLoadingSounds		= register_cvar("amx_loadsong", "1");
 	
 	cHostname			= get_cvar_pointer("hostname");
 	
 	// Damage done
-	//RegisterHam(Ham_TakeDamage, "player", "FwdPlayerTakeDamagePost", 1);
+	RegisterHam(Ham_Killed, "player", "FwdPlayerKilledPost", 1);
+	
 	register_event("Damage", "on_damage", "b", "2!0", "3=0", "4!0")	
 	
 	g_iSyncHud = CreateHudSyncObj();
@@ -212,3 +221,24 @@ public on_damage(id)
 		ShowSyncHudMsg(attacker, g_iSyncHud, "%i^n", damage)				
 	}
 }
+
+/*	Loading sounds
+ *----------------
+*/
+public client_connect(id)
+{
+	if(get_pcvar_num(cLoadingSounds))
+		client_cmd(id, "mp3 play ^"media/%s^"", soundlist[random(sizeof(soundlist))]);
+}
+
+/*	Spectator bug fix
+ *-------------------
+*/
+public FwdPlayerKilledPost(id)
+	set_task(1.0, "TaskSpecBugFix", id);
+	
+
+public TaskSpecBugFix(id)
+	client_cmd(id, "+duck; -duck; spec_menu 0");
+
+	
