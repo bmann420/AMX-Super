@@ -432,7 +432,7 @@ public CmdHeal(id, level, cid)
 		{
 			Tempid = Players[i];
 			
-			if((get_user_flags(Tempid) & ADMIN_IMMUNITY) && Tempid != id)
+			if((get_user_flags(Tempid)) && Tempid != id)
 			{
 				get_user_name(Tempid, TargetName, charsmax(TargetName));
 				console_print(id, "%L", id, "AMX_SUPER_TEAM_IMMUNITY", TargetName);
@@ -449,7 +449,7 @@ public CmdHeal(id, level, cid)
 	
 	else
 	{	
-		Tempid = cmd_target(id, Arg, CMDTARGET_OBEY_IMMUNITY | CMDTARGET_ALLOW_SELF | CMDTARGET_ONLY_ALIVE);
+		Tempid = cmd_target(id, Arg, CMDTARGET_ALLOW_SELF | CMDTARGET_ONLY_ALIVE);
 		
 		if(Tempid)
 		{
@@ -534,7 +534,7 @@ public CmdArmor(id, level, cid)
 		{
 			Tempid = Players[i];
 			
-			if((get_user_flags(Tempid) & ADMIN_IMMUNITY) && Tempid != id)
+			if((get_user_flags(Tempid)) && Tempid != id)
 			{
 				get_user_name(Tempid, TargetName, charsmax(TargetName));
 				console_print(id, "%L", id, "AMX_SUPER_TEAM_IMMUNITY", TargetName);
@@ -551,7 +551,7 @@ public CmdArmor(id, level, cid)
 	
 	else
 	{	
-		Tempid = cmd_target(id, Arg, CMDTARGET_OBEY_IMMUNITY | CMDTARGET_ALLOW_SELF | CMDTARGET_ONLY_ALIVE);
+		Tempid = cmd_target(id, Arg, CMDTARGET_ALLOW_SELF | CMDTARGET_ONLY_ALIVE);
 		
 		if(Tempid)
 		{
@@ -581,7 +581,7 @@ public CmdTeleport(id, level, cid)
 	new Target[35];
 	read_argv(1, Target, charsmax(Target));
 	
-	new Tempid = cmd_target(id, Target, CMDTARGET_OBEY_IMMUNITY | CMDTARGET_ALLOW_SELF | CMDTARGET_ONLY_ALIVE);
+	new Tempid = cmd_target(id, Target, CMDTARGET_ALLOW_SELF | CMDTARGET_ONLY_ALIVE);
 	
 	if(Tempid)
 	{
@@ -1737,7 +1737,7 @@ public CmdDrug(id, level, cid)
 	
 	if(cmd[0] == '@')
 	{
-		new players[32], pnum, CmdTeam: Team;
+		new players[32], pnum, iPlayer, CmdTeam: Team;
 
 		switch(cmd[1])
 		{
@@ -1761,7 +1761,19 @@ public CmdDrug(id, level, cid)
 		}
 		
 		for(new i = 0; i < pnum; i++)
+		{
+			iPlayer = players[i];
+			
+			if((get_user_flags(iPlayer) & ADMIN_IMMUNITY) && iPlayer != id)
+			{
+				get_user_name(iPlayer, cmd, charsmax(cmd));
+				console_print(id, "%L", "AMX_SUPER_TEAM_IMMUNITY", cmd);
+				
+				continue;
+			}
+			
 			set_user_drugs(players[i], str_to_num(length));
+		}
 		
 		new name[32], authid[32]
 
@@ -1775,7 +1787,8 @@ public CmdDrug(id, level, cid)
 	}
 	else
 	{
-		new player = cmd_target(id, cmd)
+		new player = cmd_target(id, cmd, CMDTARGET_OBEY_IMMUNITY | CMDTARGET_ALLOW_SELF | CMDTARGET_ONLY_ALIVE);
+		
 		if(!player)
 			return PLUGIN_HANDLED
 
@@ -2046,7 +2059,7 @@ public CmdGiveMoney(id, level, cid)
 	}
 	else
 	{
-		new player = cmd_target(id, arg1, CMDTARGET_OBEY_IMMUNITY | CMDTARGET_ALLOW_SELF)
+		new player = cmd_target(id, arg1, CMDTARGET_ALLOW_SELF)
 		if(!player)
 			return PLUGIN_HANDLED
 		
@@ -2124,6 +2137,14 @@ public CmdTakeMoney(id, level, cid)
 		for(new i = 0; i < pnum; i++)
 		{
 			tempid = players[i];
+			
+			if((get_user_flags(tempid) & ADMIN_IMMUNITY) && tempid != id)
+			{
+				get_user_name(tempid, arg2, charsmax(arg2));
+				console_print(id, "%L", "AMX_SUPER_TEAM_IMMUNITY", arg2);
+				
+				continue;
+			}
 			
 			takemoney = cs_get_user_money(tempid) - money;
 			
@@ -2416,7 +2437,7 @@ public CmdSpeed(id, level, cid)
 	}
 	else
 	{
-		new player = cmd_target(id, cmd, CMDTARGET_OBEY_IMMUNITY | CMDTARGET_ALLOW_SELF | CMDTARGET_ONLY_ALIVE)
+		new player = cmd_target(id, cmd, CMDTARGET_ALLOW_SELF | CMDTARGET_ONLY_ALIVE)
 		if(!player)
 			return PLUGIN_HANDLED
 
@@ -2587,7 +2608,7 @@ public CmdRevive(id, level, cid)
 	}
 	else
 	{
-		new player = cmd_target(id, cmd, CMDTARGET_OBEY_IMMUNITY | CMDTARGET_ALLOW_SELF)
+		new player = cmd_target(id, cmd, CMDTARGET_ALLOW_SELF)
 		if(!player)
 			return PLUGIN_HANDLED
 
