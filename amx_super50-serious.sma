@@ -1,31 +1,30 @@
 // Serious commands
-
 /*
- *	Nr 		COMMAND				CALLBACK FUNCTION			ADMIN LEVEL
+ *	Nr 		COMMAND			CALLBACK FUNCTION	ADMIN LEVEL
  *			
- *	1)		amx_alltalk			CmdAllTalk					ADMIN_LEVEL_A
- *	2)		amx_extend			CmdExtend					ADMIN_LEVEL_A
- *	3)		amx_(un)gag			Cmd(Un)Gag					ADMIN_LEVEL_A
- *	4)		amx_pass			CmdPass						ADMIN_PASSWORD
- *	5)		amx_nopass			CmdNoPass					ADMIN_PASSWORD
- *	6)		admin voicecomm		Cmd_PlusAdminVoice			ADMIN_VOICE
- *								Cmd_MinAdminVoice			ADMIN_VOICE
- *	7)		amx_transfer		Cmd_Transfer				ADMIN_LEVEL_D
- * 	8)		amx_swap			Cmd_Swap					ADMIN_LEVEL_D
- *	9)		amx_teamswap		Cmd_TeamSwap				ADMIN_LEVEL_D
- *	10)		amx_lock			Cmd_Lock					ADMIN_LEVEL_D
- *	11)		amx_unlock			Cmd_Unlock					ADMIN_LEVEL_D
- *	12)		amx_badaim			Cmd_BadAim					ADMIN_LEVEL_D
- *	13)		amx_quit			CmdQuit						ADMIN_LEVEL_E
- *	14)		amx_exec			CmdExec						ADMIN_BAN
- *	15a)	amx_restart			CmdRestart					ADMIN_BAN
- *	15b)	amx_shutdown		CmdRestart					ADMIN_RCON
- *	16)		say /gravity		CmdGravity					/
- *	17)		say /alltalk		CmdAlltalk					/
- *	18)		say /spec			CmdSpec						/
- *	19)		say /unspec			CmdUnSpec					/
- *	20)		say /admin(s)		CmdAdmins					/
- *	21)		say /fixsound		CmdFixSound					/
+ *	1)		amx_alltalk		CmdAllTalk		ADMIN_LEVEL_A
+ *	2)		amx_extend		CmdExtend		ADMIN_LEVEL_A
+ *	3)		amx_(un)gag		Cmd(Un)Gag		ADMIN_LEVEL_A
+ *	4)		amx_pass		CmdPass			ADMIN_PASSWORD
+ *	5)		amx_nopass		CmdNoPass		ADMIN_PASSWORD
+ *	6)		admin voicecomm		Cmd_PlusAdminVoice	ADMIN_VOICE
+ *						Cmd_MinAdminVoice	ADMIN_VOICE
+ *	7)		amx_transfer		Cmd_Transfer		ADMIN_LEVEL_D
+ * 	8)		amx_swap		Cmd_Swap		ADMIN_LEVEL_D
+ *	9)		amx_teamswap		Cmd_TeamSwap		ADMIN_LEVEL_D
+ *	10)		amx_lock			Cmd_Lock		ADMIN_LEVEL_D
+ *	11)		amx_unlock		Cmd_Unlock		ADMIN_LEVEL_D
+ *	12)		amx_badaim		Cmd_BadAim		ADMIN_LEVEL_D
+ *	13)		amx_quit			CmdQuit			ADMIN_LEVEL_E
+ *	14)		amx_exec			CmdExec			ADMIN_BAN
+ *	15a)		amx_restart		CmdRestart		ADMIN_BAN
+ *	15b)		amx_shutdown		CmdRestart		ADMIN_RCON
+ *	16)		say /gravity		CmdGravity		/
+ *	17)		say /alltalk			CmdAlltalk		/
+ *	18)		say /spec			CmdSpec			/
+ *	19)		say /unspec		CmdUnSpec		/
+ *	20)		say /admin(s)		CmdAdmins		/
+ *	21)		say /fixsound		CmdFixSound		/
 */
 
 
@@ -35,6 +34,9 @@ AMX_SUPER_UBERSLAP_TEAM_CASE1 = [AMXX] ADMIN uberslapped %s players
 AMX_SUPER_UBERSLAP_TEAM_CASE2 = [AMXX] ADMIN %s uberslapped %s players
 AMX_SUPER_UBERSLAP_TEAM_LOG = [AMX_Super] UBERSLAP: ^"%s<%s^" uberslapped ^"%s^" players
 
+AMX_SUPER_ALREADY_GAGGED = [AMXX] %s is already gagged and cannot be gagged again.
+AMX_SUPER_TRANSFER_PLAYER_ALREADY = [AMXX] This player already belongs to that team!
+
 [nl]
 AMX_SUPER_UBERSLAP_TEAM_CASE1 = [AMXX] ADMIN ubersloeg %s spelers
 AMX_SUPER_UBERSLAP_TEAM_CASE2 = [AMXX] ADMIN %s ubersloeg %s spelers
@@ -42,13 +44,14 @@ AMX_SUPER_UBERSLAP_TEAM_LOG = [AMX_Super] UBERSLAAN: ^"%s<%s^" ubersloeg ^"%s^" 
 */
 
 /*
+# [TO DO?] Name global variables like they should, I mean, we have g_GlowColor for example but below we have 'smoke', just telling this to make the code easier to read (same as the #1) (goes for both plugins, serious and fun commands)
 
-# Name global variables like they should, I mean, we have g_GlowColor for example but below we have 'smoke', just telling this to make the code easier to read (same as the #1) (goes for both plugins, serious and fun commands)
-
-# amx_userorigin doesn't log, I don't know if this was made on purpose, just pointing it out...
-
-
-# I suggest making a cvar for amx_ban on Bad Aim because I don't think it's necessary at all, it's just a fun command or a "punishment" command type but there's no need to ban the user if he kills someone lol...
+06/26/2011 Juann
+@ Moved the ML lines to the top of the plugin 
+@ Added the new ML lines in prints
+@ Fixed a tiny thing on Cmd_Ungag where PlayerName variable wasn't used
+@ Fixed LANG_PLAYER being used when the target of the print was only one player
+@ Fixed (untested) say /spec bug where UNASSIGNED and SPECTATOR teams could use it and crash the server with chooseteam menu
 */
 
 #include <amxmodx>
@@ -76,16 +79,16 @@ new bool: cyclerfile;
 
 //		amx_gag
 #define TASK_GAG 		5446		// Taskid for gag. Change this number if it interferes with any other plugins.
-#define SPEAK_NORMAL	0		// Not to be changed.
+#define SPEAK_NORMAL	0			// Not to be changed.
 #define SPEAK_MUTED		1		// Not to be changed.
 #define SPEAK_ALL		2		// Not to be changed.
-#define SPEAK_LISTENALL	4		// Not to be changed.
+#define SPEAK_LISTENALL	4			// Not to be changed.
 
 // admin voicecomm
 #define ADMIN_VOICE		ADMIN_RESERVATION
 
 // amx_badaim
-#define TASKID_UNBADAIM		15542	// taskid. Change this number if it interfers with any other plugins
+#define TASKID_UNBADAIM		15542		// taskid. Change this number if it interfers with any other plugins
 #define TERRO 	0
 #define COUNTER 1
 #define AUTO	4
@@ -119,7 +122,6 @@ new cAllTalk
 	, autobantimed
 	, autobanall
 	, cGravity
-	//, cAlltalk
 	, cAllowSoundFix
 	, cAllowSpec
 	, cAllowPublicSpec
@@ -221,24 +223,22 @@ public plugin_init()
 	register_event("VoiceMask", "Event_VoiceMask", "b");
 	
 	// Register new cvars and get existing cvar pointers:
-	cAllTalk 			= get_cvar_pointer("sv_alltalk");
-	cTimeLimit 			= get_cvar_pointer("mp_timelimit");
+	cAllTalk 		= get_cvar_pointer("sv_alltalk");
+	cTimeLimit 		= get_cvar_pointer("mp_timelimit");
 	sv_password 		= get_cvar_pointer("sv_password")
-	cGravity 			= get_cvar_pointer("sv_gravity");
-	// repeated-=removed
-	//cAlltalk 			= get_cvar_pointer("sv_alltalk");
-	cAllowSpec 			= get_cvar_pointer("allow_spectators");
-	cSvContact 			= get_cvar_pointer("sv_contact");
+	cGravity 		= get_cvar_pointer("sv_gravity");
+	cAllowSpec 		= get_cvar_pointer("allow_spectators");
+	cSvContact 		= get_cvar_pointer("sv_contact");
 	
-	cGagSound 			= register_cvar("amx_super_gagsound", "1");
+	cGagSound 		= register_cvar("amx_super_gagsound", "1");
 	cBlockNameChange 	= register_cvar("amx_super_gag_block_namechange", "1");
 	cDefaultGagTime 	= register_cvar("amx_super_gag_default_time", "600.0");
 	autobantimed 		= register_cvar("amx_autobantimed", "1");
-	autobanall 			= register_cvar("amx_autobanall", "1");
+	autobanall 		= register_cvar("amx_autobanall", "1");
 	cAllowSoundFix 		= register_cvar("amx_soundfix_pallow", "1");
 	cAllowPublicSpec 	= register_cvar("allow_public_spec","1");
 	cAdminCheck 		= register_cvar("amx_admin_check", "1");
-	cBadAimBan			= register_cvar("amx_badaim_ban", "0");
+	cBadAimBan		= register_cvar("amx_badaim_ban", "0");
 	
 	
 	// amx_gag
@@ -386,7 +386,7 @@ public CmdExtend(id, level, cid)
 	{
 		if(containi(Arg, "-") != -1)
 		{
-			client_print(id,print_chat,"%L", LANG_PLAYER, "AMX_SUPER_EXTEND_BAD_NUMBER");
+			client_print(id,print_chat,"%L", id, "AMX_SUPER_EXTEND_BAD_NUMBER");
 			
 			return PLUGIN_HANDLED;
 		}
@@ -395,14 +395,14 @@ public CmdExtend(id, level, cid)
 		
 		if(g_ExtendLimit >= EXTENDMAX)
 		{
-			client_print(id,print_chat,"%L", LANG_PLAYER, "AMX_SUPER_EXTEND_EXTENDMAX",EXTENDMAX);
+			client_print(id,print_chat,"%L", id, "AMX_SUPER_EXTEND_EXTENDMAX",EXTENDMAX);
 			
 			return PLUGIN_HANDLED;
 		}
 		
 		if(tlimit > EXTENDTIME)
 		{
-			client_print(id,print_chat,"%L", LANG_PLAYER, "AMX_SUPER_EXTEND_EXTENDTIME",EXTENDTIME);
+			client_print(id,print_chat,"%L", id, "AMX_SUPER_EXTEND_EXTENDTIME",EXTENDTIME);
 			
 			tlimit = EXTENDTIME;
 		}
@@ -452,8 +452,7 @@ public CmdGag(id, level, cid)
 		// added by juann
 		if (g_GagFlags[iPlayer] != NONE)
 		{
-			// player was already gagged
-			// AMX_SUPER_ALREADY_GAGGED = [AMXX] %s is already gagged & cannot be gagged again.
+			console_print(id, "%L", id, "AMX_SUPER_ALREADY_GAGGED");
 			return PLUGIN_HANDLED
 		}
 		
@@ -599,11 +598,11 @@ public CmdUngag(id, level, cid)
 	if(iPlayer)
 	{
 		new PlayerName[35];
+		get_user_name(id, PlayerName, charsmax(PlayerName)); // wasn't here...
 		
 		if(g_GagFlags[iPlayer] == NONE)
 		{
 			console_print(id, "%L", id, "AMX_SUPER_NOT_GAGGED", PlayerName);
-			
 			return PLUGIN_HANDLED;
 		}
 		
@@ -859,13 +858,13 @@ public Cmd_Transfer(id, level, cid)
 		else
 		{
 			// default case moved here
-			client_print(id, print_console, "%L", LANG_PLAYER, "AMX_SUPER_TEAM_INVALID");
+			console_print(id, "%L", id, "AMX_SUPER_TEAM_INVALID");
 			return PLUGIN_HANDLED;
 		}
 		
 		if (cTeam == pTeam)
 		{
-			// AMX_SUPER_TRANSFER_PLAYER_ALREADY = [AMXX] This player already belongs to that team!
+			console_print(id, "%L", id, "AMX_SUPER_TRANSFER_PLAYER_ALREADY")
 			return PLUGIN_HANDLED
 		}
 		else
@@ -926,9 +925,9 @@ public Cmd_Transfer(id, level, cid)
 	
 	show_activity_key("AMX_SUPER_TRANSFER_PLAYER_CASE1", "AMX_SUPER_TRANSFER_PLAYER_CASE2", idname, tempidname, teamname);
 
-	client_print(tempid, print_chat, "%L", LANG_PLAYER, "AMX_SUPER_TRANSFER_PLAYER_TEAM", teamname);
+	client_print(tempid, print_chat, "%L", tempid, "AMX_SUPER_TRANSFER_PLAYER_TEAM", teamname);
 
-	console_print(id, "%L", LANG_PLAYER, "AMX_SUPER_TRANSFER_PLAYER_CONSOLE", idname, teamname);
+	console_print(id, "%L", id, "AMX_SUPER_TRANSFER_PLAYER_CONSOLE", idname, teamname);
 	log_amx("%L", LANG_SERVER, "AMX_SUPER_TRANSFER_PLAYER_LOG", idname, authid, tempidname, teamname);
 	
 	return PLUGIN_HANDLED;
@@ -957,14 +956,14 @@ public Cmd_Swap(id, level, cid)
 	
 	if(team1 == team2)
 	{
-		client_print(id, print_console, "%L", LANG_PLAYER, "AMX_SUPER_TRANSFER_PLAYER_ERROR_CASE1");
+		client_print(id, print_console, "%L", id, "AMX_SUPER_TRANSFER_PLAYER_ERROR_CASE1");
 		
 		return PLUGIN_HANDLED;
 	}
 	
 	if(team1 == CS_TEAM_UNASSIGNED || team2 == CS_TEAM_UNASSIGNED)
 	{
-		client_print(id, print_console, "%L", LANG_PLAYER, "AMX_SUPER_TRANSFER_PLAYER_ERROR_CASE2");
+		client_print(id, print_console, "%L", id, "AMX_SUPER_TRANSFER_PLAYER_ERROR_CASE2");
 		
 		return PLUGIN_HANDLED;
 	}
@@ -989,10 +988,10 @@ public Cmd_Swap(id, level, cid)
 	
 	show_activity_key("AMX_SUPER_TRANSFER_SWAP_PLAYERS_SUCCESS_CASE1", "AMX_SUPER_TRANSFER_SWAP_PLAYERS_SUCCESS_CASE2", idname, name1, name2);
 
-	client_print(tempid1, print_chat, "%L", LANG_PLAYER, "AMX_SUPER_TRANSFER_SWAP_PLAYERS_MESSAGE1", name2);
-	client_print(tempid2, print_chat, "%L", LANG_PLAYER, "AMX_SUPER_TRANSFER_SWAP_PLAYERS_MESSAGE2", name1);
+	client_print(tempid1, print_chat, "%L", tempid1, "AMX_SUPER_TRANSFER_SWAP_PLAYERS_MESSAGE1", name2);
+	client_print(tempid2, print_chat, "%L", tempid2, "AMX_SUPER_TRANSFER_SWAP_PLAYERS_MESSAGE2", name1);
 
-	client_print(id, print_console, "%L", LANG_PLAYER, "AMX_SUPER_TRANSFER_SWAP_PLAYERS_CONSOLE", name1, name2);
+	client_print(id, print_console, "%L", id, "AMX_SUPER_TRANSFER_SWAP_PLAYERS_CONSOLE", name1, name2);
 	
 	log_amx("%L", LANG_PLAYER, "AMX_SUPER_TRANSFER_SWAP_PLAYERS_LOG", idname, authid, name1, name2);
 	
@@ -1024,7 +1023,7 @@ public Cmd_TeamSwap(id, level, cid)
 
 	show_activity_key("AMX_SUPER_TRANSFER_SWAP_TEAM_SUCCESS_CASE1", "AMX_SUPER_TRANSFER_SWAP_TEAM_SUCCESS_CASE2", name);
 
-	console_print(id,"%L", LANG_PLAYER, "AMX_SUPER_TRANSFER_SWAP_TEAM_MESSAGE");
+	console_print(id,"%L", id, "AMX_SUPER_TRANSFER_SWAP_TEAM_MESSAGE");
 	
 	log_amx("%L", LANG_SERVER, "AMX_SUPER_TRANSFER_SWAP_TEAM_LOG", name,authid);
 	
@@ -1062,7 +1061,7 @@ public Cmd_Lock(id, level, cid)
 		
 		default:
 		{	
-			client_print(id, print_console, "%L", LANG_PLAYER, "AMX_SUPER_TEAM_INVALID");
+			client_print(id, print_console, "%L", id, "AMX_SUPER_TEAM_INVALID");
 			
 			return PLUGIN_HANDLED;
 		}	
@@ -1076,7 +1075,7 @@ public Cmd_Lock(id, level, cid)
 	
 	show_activity_key("AMX_SUPER_TEAM_LOCK_CASE1", "AMX_SUPER_TEAM_LOCK_CASE2", name, Teamnames[team]);
 
-	console_print(id, "%L", LANG_PLAYER, "AMX_SUPER_TEAM_LOCK_CONSOLE", Teamnames[team]);
+	console_print(id, "%L", id, "AMX_SUPER_TEAM_LOCK_CONSOLE", Teamnames[team]);
 	log_amx("%L", LANG_SERVER, "AMX_SUPER_LOCK_TEAMS_LOG", name, authid, Teamnames[team]);
 
 	return PLUGIN_HANDLED;
@@ -1113,7 +1112,7 @@ public Cmd_Unlock(id, level, cid)
 		
 		default:
 		{	
-			client_print(id, print_console, "%L", LANG_PLAYER, "AMX_SUPER_TEAM_INVALID");
+			client_print(id, print_console, "%L", id, "AMX_SUPER_TEAM_INVALID");
 			
 			return PLUGIN_HANDLED;
 		}	
@@ -1127,7 +1126,7 @@ public Cmd_Unlock(id, level, cid)
 	
 	show_activity_key("AMX_SUPER_TEAM_UNLOCK_CASE1", "AMX_SUPER_TEAM_UNLOCK_CASE2", name, Teamnames[team]);
 	
-	console_print(id, "%L", LANG_PLAYER, "AMX_SUPER_TEAM_UNLOCK_CONSOLE", Teamnames[team]);
+	console_print(id, "%L", id, "AMX_SUPER_TEAM_UNLOCK_CONSOLE", Teamnames[team]);
 	log_amx("%L", LANG_SERVER, "AMX_SUPER_UNLOCK_TEAMS_LOG", name, authid, Teamnames[team]);
 
 	return PLUGIN_HANDLED;
@@ -1198,7 +1197,7 @@ public Cmd_BadAim(id, level, cid)
 	
 	if(!strlen(Time))
 	{
-		console_print(id, "%L", LANG_PLAYER, "AMX_SUPER_BADAIM_CONSOLE");
+		console_print(id, "%L", id, "AMX_SUPER_BADAIM_CONSOLE");
 		
 		return PLUGIN_HANDLED;
 	}
@@ -1207,7 +1206,7 @@ public Cmd_BadAim(id, level, cid)
 
 	if(timenum < 0)
 	{
-		console_print(id, "%L", LANG_PLAYER, "AMX_SUPER_BADAIM_BADTIME");
+		console_print(id, "%L", id, "AMX_SUPER_BADAIM_BADTIME");
 		
 		return PLUGIN_HANDLED;
 	}
@@ -1227,14 +1226,14 @@ public Cmd_BadAim(id, level, cid)
 		{
 			if(!g_HasBadAim[tempid])
 			{
-				console_print(id, "%L", LANG_PLAYER, "AMX_SUPER_BADAIM_NO_BADAIM", name);
+				console_print(id, "%L", id, "AMX_SUPER_BADAIM_NO_BADAIM", name);
 				
 				return PLUGIN_HANDLED;
 			}
 			
 			g_HasBadAim[tempid] = false;
 			
-			console_print(id, "%L", LANG_PLAYER, "AMX_SUPER_BADAIM_UNDO",name);
+			console_print(id, "%L", id, "AMX_SUPER_BADAIM_UNDO",name);
 
 			set_aimvault(tempid, 0);
 		}
@@ -1243,7 +1242,7 @@ public Cmd_BadAim(id, level, cid)
 		{
 			if(g_HasBadAim[tempid])
 			{
-				console_print(id, "%L", LANG_PLAYER, "AMX_SUPER_BADAIM_CURRENT", name);
+				console_print(id, "%L", id, "AMX_SUPER_BADAIM_CURRENT", name);
 				
 				return PLUGIN_HANDLED;
 			}
@@ -1253,16 +1252,16 @@ public Cmd_BadAim(id, level, cid)
 				
 			g_HasBadAim[tempid] = true;
 			
-			console_print(id, "%L", LANG_PLAYER, "AMX_SUPER_BADAIM_WORSE", name);
+			console_print(id, "%L", id, "AMX_SUPER_BADAIM_WORSE", name);
 		}
 		
 		default: // Timed
 		{
 			if(g_HasBadAim[tempid])
-				console_print(id, "%L", LANG_PLAYER, "AMX_SUPER_BADAIM_MESSAGE1",name, timenum);
+				console_print(id, "%L", id, "AMX_SUPER_BADAIM_MESSAGE1",name, timenum);
 				
 			else
-				console_print(id, "%L", LANG_PLAYER, "AMX_SUPER_BADAIM_MESSAGE2",name, timenum);
+				console_print(id, "%L", id, "AMX_SUPER_BADAIM_MESSAGE2",name, timenum);
 		
 			if(get_pcvar_num(autobantimed))
 				g_AutoBan[tempid] = true;
@@ -1282,7 +1281,7 @@ public Cmd_BadAim(id, level, cid)
 	if(savenum)
 	{
 		if(timenum > 1)
-			console_print(id, "%L", LANG_PLAYER, "AMX_SUPER_BADAIM_BAN");
+			console_print(id, "%L", id, "AMX_SUPER_BADAIM_BAN");
 
 		else
 			set_aimvault(tempid, 1);
@@ -1305,9 +1304,9 @@ public Task_UnBadAim(data[])
 	new name[35];
 	get_user_name(tempid, name, charsmax(name));
 
-	client_print(id, print_chat, "%L", LANG_PLAYER, "AMX_SUPER_BADAIM_NO_BADAIM_MESSAGE", name);
+	client_print(id, print_chat, "%L", id, "AMX_SUPER_BADAIM_NO_BADAIM_MESSAGE", name);
 	
-	console_print(id, "%L", LANG_PLAYER, "AMX_SUPER_BADAIM_NO_BADAIM_MESSAGE_CONSOLE", name);
+	console_print(id, "%L", id, "AMX_SUPER_BADAIM_NO_BADAIM_MESSAGE_CONSOLE", name);
 
 	g_HasBadAim[tempid] = false;
 	g_AutoBan[tempid] = false;
@@ -1643,7 +1642,7 @@ public CmdSpec(id)
 {
 	new CsTeams: Team = cs_get_user_team(id);
 	
-	if((CS_TEAM_UNASSIGNED <= Team <= CS_TEAM_SPECTATOR) 
+	if( ( Team == CS_TEAM_CT || Team == CS_TEAM_T ) /*(CS_TEAM_UNASSIGNED <= Team <= CS_TEAM_SPECTATOR)*/ 
 	&& get_pcvar_num(cAllowSpec) 
 	|| get_pcvar_num(cAllowPublicSpec)) 
 	{
@@ -1761,6 +1760,3 @@ public CmdFixSound(id)
 	
 	return PLUGIN_HANDLED;
 } 
-/* AMXX-Studio Notes - DO NOT MODIFY BELOW HERE
-*{\\ rtf1\\ ansi\\ deff0{\\ fonttbl{\\ f0\\ fnil Tahoma;}}\n\\ viewkind4\\ uc1\\ pard\\ lang3082\\ f0\\ fs16 \n\\ par }
-*/
