@@ -15,6 +15,9 @@
 	- Added loading sounds.
 	- Added spectator bug fix.
 	
+	Drekes		10/19/2011
+	- Added register_plugin.
+	
 */
 
 #include <amxmodx>
@@ -65,6 +68,8 @@ new g_MaxPlayers;
 
 public plugin_init()
 {
+	register_plugin("Amx Super Others", "5.0", "Supercentral.net Scripting Team");
+	
 	cLeaveMsgEnable		= register_cvar("amx_leavemessage_enable", "1");
 	cEnterMsgEnable 	= register_cvar("amx_join_leave", "1");
 	cEnterMsg 			= register_cvar("amx_enter_message", "%name% has joined!\nEnjoy the Server!\nCurrent Ranking is %rankpos%");
