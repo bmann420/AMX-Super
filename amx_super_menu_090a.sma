@@ -54,6 +54,7 @@
 		* Fixed Unbury menu burying deeper.	
 		* Fixed "redundant test: constant expression is non-zero" compiling warnings.
 		* Fixed lock menu didn't work, had to change the option first.
+		* Fixed lock menu not exiting.
 */
 #pragma semicolon 1
 
@@ -182,7 +183,7 @@ public plugin_init()
 	register_plugin(PLUGIN, VERSION, AUTHOR);
 	
 	register_cvar("amx_super_menu",VERSION,FCVAR_SERVER|FCVAR_EXTDLL|FCVAR_UNLOGGED|FCVAR_SPONLY);
-	menufunc = register_cvar("supermenu_func", "0");
+	menufunc = register_cvar("supermenu_func", "1");
 	register_dictionary("amx_super_menu.txt");
 	register_dictionary("common.txt");
 	
@@ -536,8 +537,7 @@ public alltalkMenu(id, menu, item)
 	new cmd[3], access, callback;
 	menu_item_getinfo(menu, item, access, cmd, 2,_,_, callback);
 	
-	// client_cmd(id, menuCmd[alltalk], cmd);
-	client_cmd(id, menuCmd[alltalk], str_to_num(cmd));
+	client_cmd(id, menuCmd[alltalk], cmd);
 	
 	return PLUGIN_HANDLED;	
 }
@@ -567,14 +567,14 @@ public lockMenu(id, key)
 		case 9:
 		{
 			if (get_pcvar_num(menufunc))
-			{
 				menu_display(id, g_mainmenu, 0);
-				return PLUGIN_HANDLED;
-			}
+
+			return PLUGIN_HANDLED;
 		}
 		default: return PLUGIN_HANDLED;
 	}
 	
+	client_print(0, print_chat, "Menu key = %i", key);
 	client_cmd(id, menuCmd[g_menuProperties[id]], team);
 	
 	displayLockMenu(id);
@@ -590,7 +590,11 @@ displayLockMenu(id)
 	if (g_menuProperties[id] == lock)
 		format(line, charsmax(line), "%L ^n", id, "AMXSUPER_LOCK");
 	else
+	{
 		format(line, charsmax(line), "%L ^n", id, "AMXSUPER_UNLOCK");
+		g_menuProperties[id] = unlock;
+	}
+	
 	add(menuBody, charsmax(menuBody), line);
 	format(line, charsmax(line), "^n\w^n");
 	add(menuBody, charsmax(menuBody), line);
@@ -610,9 +614,7 @@ displayLockMenu(id)
 	format(line, charsmax(line), "^n^n0. %L", id, "EXIT");
 	add(menuBody, charsmax(menuBody), line);
 	new keys = MENU_KEY_0|MENU_KEY_1|MENU_KEY_2|MENU_KEY_3|MENU_KEY_4|MENU_KEY_5;
-	
-	g_menuProperties[id] = unlock;
-	
+		
 	show_menu(id, keys, menuBody, -1, "Lock Menu");
 }
 
