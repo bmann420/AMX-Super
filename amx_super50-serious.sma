@@ -2,29 +2,29 @@
 /*
  *	Nr 		COMMAND			CALLBACK FUNCTION	ADMIN LEVEL
  *			
- *	1)		amx_alltalk		CmdAllTalk		ADMIN_LEVEL_A
- *	2)		amx_extend		CmdExtend		ADMIN_LEVEL_A
- *	3)		amx_(un)gag		Cmd(Un)Gag		ADMIN_LEVEL_A
- *	4)		amx_pass		CmdPass			ADMIN_PASSWORD
- *	5)		amx_nopass		CmdNoPass		ADMIN_PASSWORD
- *	6)		admin voicecomm		Cmd_PlusAdminVoice	ADMIN_VOICE
- *						Cmd_MinAdminVoice	ADMIN_VOICE
- *	7)		amx_transfer		Cmd_Transfer		ADMIN_LEVEL_D
- * 	8)		amx_swap		Cmd_Swap		ADMIN_LEVEL_D
- *	9)		amx_teamswap		Cmd_TeamSwap		ADMIN_LEVEL_D
- *	10)		amx_lock			Cmd_Lock		ADMIN_LEVEL_D
- *	11)		amx_unlock		Cmd_Unlock		ADMIN_LEVEL_D
- *	12)		amx_badaim		Cmd_BadAim		ADMIN_LEVEL_D
- *	13)		amx_quit			CmdQuit			ADMIN_LEVEL_E
- *	14)		amx_exec			CmdExec			ADMIN_BAN
- *	15a)		amx_restart		CmdRestart		ADMIN_BAN
- *	15b)		amx_shutdown		CmdRestart		ADMIN_RCON
- *	16)		say /gravity		CmdGravity		/
- *	17)		say /alltalk			CmdAlltalk		/
- *	18)		say /spec			CmdSpec			/
- *	19)		say /unspec		CmdUnSpec		/
- *	20)		say /admin(s)		CmdAdmins		/
- *	21)		say /fixsound		CmdFixSound		/
+ *	1)		amx_alltalk		CmdAllTalk			ADMIN_LEVEL_A
+ *	2)		amx_extend		CmdExtend			ADMIN_LEVEL_A
+ *	3)		amx_(un)gag		Cmd(Un)Gag			ADMIN_LEVEL_A
+ *	4)		amx_pass		CmdPass				ADMIN_PASSWORD
+ *	5)		amx_nopass		CmdNoPass			ADMIN_PASSWORD
+ *	6)		admin voicecomm	Cmd_PlusAdminVoice	ADMIN_VOICE
+ *							Cmd_MinAdminVoice	ADMIN_VOICE
+ *	7)		amx_transfer	Cmd_Transfer		ADMIN_LEVEL_D
+ * 	8)		amx_swap		Cmd_Swap			ADMIN_LEVEL_D
+ *	9)		amx_teamswap	Cmd_TeamSwap		ADMIN_LEVEL_D
+ *	10)		amx_lock		Cmd_Lock			ADMIN_LEVEL_D
+ *	11)		amx_unlock		Cmd_Unlock			ADMIN_LEVEL_D
+ *	12)		amx_badaim		Cmd_BadAim			ADMIN_LEVEL_D
+ *	13)		amx_quit		CmdQuit				ADMIN_LEVEL_E
+ *	14)		amx_exec		CmdExec				ADMIN_BAN
+ *	15a)	amx_restart		CmdRestart			ADMIN_BAN
+ *	15b)	amx_shutdown	CmdRestart			ADMIN_RCON
+ *	16)		say /gravity	CmdGravity				/
+ *	17)		say /alltalk	CmdAlltalk				/
+ *	18)		say /spec		CmdSpec					/
+ *	19)		say /unspec		CmdUnSpec				/
+ *	20)		say /admin(s)	CmdAdmins				/
+ *	21)		say /fixsound	CmdFixSound				/
 */
 
 
@@ -41,6 +41,9 @@ AMX_SUPER_TRANSFER_PLAYER_ALREADY = [AMXX] This player already belongs to that t
 AMX_SUPER_UBERSLAP_TEAM_CASE1 = [AMXX] ADMIN ubersloeg %s spelers
 AMX_SUPER_UBERSLAP_TEAM_CASE2 = [AMXX] ADMIN %s ubersloeg %s spelers
 AMX_SUPER_UBERSLAP_TEAM_LOG = [AMX_Super] UBERSLAAN: ^"%s<%s^" ubersloeg ^"%s^" spelers
+
+AMX_SUPER_ALREADY_GAGGED = [AMXX] %s is al gemute en kan niet opnieuw gemoet worden.
+AMX_SUPER_TRANSFER_PLAYER_ALREADY = [AMXX] Deze speler zit al in dat team!
 */
 
 /*
@@ -52,6 +55,11 @@ AMX_SUPER_UBERSLAP_TEAM_LOG = [AMX_Super] UBERSLAAN: ^"%s<%s^" ubersloeg ^"%s^" 
 @ Fixed a tiny thing on Cmd_Ungag where PlayerName variable wasn't used
 @ Fixed LANG_PLAYER being used when the target of the print was only one player
 @ Fixed (untested) say /spec bug where UNASSIGNED and SPECTATOR teams could use it and crash the server with chooseteam menu
+
+10/19/2011 Drekes
+@ Fixed alltalk activity printing wrong values.
+
+
 */
 
 #include <amxmodx>
@@ -220,25 +228,25 @@ public plugin_init()
 	register_clcmd("+adminvoice", 	"Cmd_PlusAdminVoice");		
 	register_clcmd("-adminvoice", 	"Cmd_MinAdminVoice");		
 	
-	register_event("VoiceMask", "Event_VoiceMask", "b");
+	register_event("VoiceMask", 	"Event_VoiceMask", "b");
 	
 	// Register new cvars and get existing cvar pointers:
-	cAllTalk 		= get_cvar_pointer("sv_alltalk");
-	cTimeLimit 		= get_cvar_pointer("mp_timelimit");
+	cAllTalk 			= get_cvar_pointer("sv_alltalk");
+	cTimeLimit 			= get_cvar_pointer("mp_timelimit");
 	sv_password 		= get_cvar_pointer("sv_password")
-	cGravity 		= get_cvar_pointer("sv_gravity");
-	cAllowSpec 		= get_cvar_pointer("allow_spectators");
-	cSvContact 		= get_cvar_pointer("sv_contact");
+	cGravity 			= get_cvar_pointer("sv_gravity");
+	cAllowSpec 			= get_cvar_pointer("allow_spectators");
+	cSvContact 			= get_cvar_pointer("sv_contact");
 	
-	cGagSound 		= register_cvar("amx_super_gagsound", "1");
+	cGagSound 			= register_cvar("amx_super_gagsound", "1");
 	cBlockNameChange 	= register_cvar("amx_super_gag_block_namechange", "1");
 	cDefaultGagTime 	= register_cvar("amx_super_gag_default_time", "600.0");
 	autobantimed 		= register_cvar("amx_autobantimed", "1");
-	autobanall 		= register_cvar("amx_autobanall", "1");
+	autobanall 			= register_cvar("amx_autobanall", "1");
 	cAllowSoundFix 		= register_cvar("amx_soundfix_pallow", "1");
 	cAllowPublicSpec 	= register_cvar("allow_public_spec","1");
 	cAdminCheck 		= register_cvar("amx_admin_check", "1");
-	cBadAimBan		= register_cvar("amx_badaim_ban", "0");
+	cBadAimBan			= register_cvar("amx_badaim_ban", "0");
 	
 	
 	// amx_gag
@@ -339,7 +347,6 @@ public CmdAllTalk(id, level, cid)
 	
 	new Arg[5];
 	read_argv(1, Arg, charsmax(Arg));
-	// server_cmd("sv_alltalk %s", Arg);
 	set_pcvar_num(cAllTalk, str_to_num(Arg));
 	
 	new AdminName[35], AdminAuth[35];
@@ -347,11 +354,9 @@ public CmdAllTalk(id, level, cid)
 	get_user_authid(id, AdminAuth, charsmax(AdminAuth));
 	
 	console_print(id, "%L", id, "AMX_SUPER_ALLTALK_MSG", Arg);
-	
-	new Num = str_to_num(Arg);
-	
-	show_activity_key("AMX_SUPER_ALLTALK_SET_CASE1", "AMX_SUPER_ALLTALK_SET_CASE2", AdminName, Num);
-	log_amx("%L", LANG_SERVER, "AMX_SUPER_ALLTALK_LOG", AdminName, AdminAuth, Num);
+		
+	show_activity_key("AMX_SUPER_ALLTALK_SET_CASE1", "AMX_SUPER_ALLTALK_SET_CASE2", AdminName, Arg);
+	log_amx("%L", LANG_SERVER, "AMX_SUPER_ALLTALK_LOG", AdminName, AdminAuth, Arg);
 	
 	return PLUGIN_HANDLED;
 }
@@ -879,7 +884,7 @@ public Cmd_Transfer(id, level, cid)
 				ExecuteHamB(Ham_CS_RoundRespawn, tempid)
 
 			// using teamnames variable if team != spec
-			formatex(teamname, charsmax(teamname)-1, "%s", cTeam == CS_TEAM_SPECTATOR ? "Spectator" : Teamnames[_:cTeam - 1])
+			formatex(teamname, charsmax(teamname), "%s", cTeam == CS_TEAM_SPECTATOR ? "Spectator" : Teamnames[_:cTeam - 1])
 			
 			/*switch(team[0])
 			{
