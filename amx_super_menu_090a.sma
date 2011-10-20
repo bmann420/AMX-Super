@@ -47,14 +47,24 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * */
  
  /*
-	Changelog:
-		- Drekes	10/19/2011
-		* Added changelog.
-		* Fixed bury title ML problem.
-		* Fixed Unbury menu burying deeper.	
-		* Fixed "redundant test: constant expression is non-zero" compiling warnings.
-		* Fixed lock menu didn't work, had to change the option first.
-		* Fixed lock menu not exiting.
+	Updates:
+	
+	10/19/2011		Drekes
+	@ Added changelog.
+	@ Fixed bury title ML problem.
+	@ Fixed Unbury menu burying deeper.	
+	@ Fixed "redundant test: constant expression is non-zero" compiling warnings.
+	@ Fixed lock menu didn't work, had to change the option first.
+	@ Fixed lock menu not exiting.
+	
+	10/20/2011		Drekes
+	@ Fixed alltalk menu not closing when supermenu_func is 0.
+	@ Added Cvar to keep menu's open after pressing key. 
+		Applied to:
+		- Alltalk menu.
+	
+	To Do:
+	
 */
 #pragma semicolon 1
 
@@ -100,7 +110,7 @@ enum
 	maxvalue
 }
 
-new g_mainmenu, g_alltalkmenu, g_extendmenu, g_gravitymenu, menufunc;
+new g_mainmenu, g_alltalkmenu, g_extendmenu, g_gravitymenu, menufunc, hidemenu;
 new g_menuPosition[33], g_menuPlayers[33][35], g_menuPlayersNum[33], g_menuProperties[33], g_menuProperties2[33], g_menuPlayerName[33][32], g_menu[33];
 new menuname[64];
 new allkeys = MENU_KEY_0|MENU_KEY_1|MENU_KEY_2|MENU_KEY_3|MENU_KEY_4|MENU_KEY_5|MENU_KEY_6|MENU_KEY_7|MENU_KEY_8|MENU_KEY_9;
@@ -212,6 +222,8 @@ public plugin_init()
 	register_concmd("amx_supermenu", "handle_cmd", ADMIN_MENU, " - Bring up the menu for AMX_Super");
 	register_concmd("supermenu_edit", "handle_cmd", ADMIN_MENU, " - Allows you to edit the values the menu displays");
 	register_concmd("amx_supermenu_edit", "handle_cmd", ADMIN_MENU, " - Allows you to edit the values the menu displays");
+	
+	hidemenu = register_cvar("supermenu_hide_menu", "0");	// Hides menu after selecting a choice
 	
 	arrayset(accessLevel, -2, maxvalue);
 	valueArray = ArrayCreate(1, maxvalue);
@@ -526,9 +538,14 @@ public mainMenu(id, menu, item)
 
 public alltalkMenu(id, menu, item)
 {
-	if (item == MENU_EXIT && get_pcvar_num(menufunc))
-	{
-		menu_display(id, g_mainmenu, 0);
+	if(!get_pcvar_num(hidemenu))
+		menu_display(id, g_alltalkmenu, 0);
+		
+	if (item == MENU_EXIT)
+	{	
+		if(get_pcvar_num(menufunc))
+			menu_display(id, g_mainmenu, 0);
+			
 		return PLUGIN_CONTINUE;
 	}
 	if (item < 0)
@@ -574,7 +591,6 @@ public lockMenu(id, key)
 		default: return PLUGIN_HANDLED;
 	}
 	
-	client_print(0, print_chat, "Menu key = %i", key);
 	client_cmd(id, menuCmd[g_menuProperties[id]], team);
 	
 	displayLockMenu(id);
