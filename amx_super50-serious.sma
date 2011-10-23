@@ -49,15 +49,18 @@ AMX_SUPER_TRANSFER_PLAYER_ALREADY = [AMXX] Deze speler zit al in dat team!
 /*
 # [TO DO?] Name global variables like they should, I mean, we have g_GlowColor for example but below we have 'smoke', just telling this to make the code easier to read (same as the #1) (goes for both plugins, serious and fun commands)
 
-06/26/2011 Juann
+06/26/2011 	Juann
 @ Moved the ML lines to the top of the plugin 
 @ Added the new ML lines in prints
 @ Fixed a tiny thing on Cmd_Ungag where PlayerName variable wasn't used
 @ Fixed LANG_PLAYER being used when the target of the print was only one player
 @ Fixed (untested) say /spec bug where UNASSIGNED and SPECTATOR teams could use it and crash the server with chooseteam menu
 
-10/19/2011 Drekes
+10/19/2011 	Drekes
 @ Fixed alltalk activity printing wrong values.
+
+10/23/2011	Drekes
+@ Removed "You quited" debug messages when executing amx_quit.
 
 
 */
@@ -1071,7 +1074,7 @@ public Cmd_Lock(id, level, cid)
 			return PLUGIN_HANDLED;
 		}	
 	}
-	
+		
 	g_BlockJoin[team] = true;
 	
 	new name[35], authid[35];
@@ -1428,8 +1431,6 @@ public CmdQuit(id, level, cid)
 			}
 			
 			client_cmd(0, "spk ^"ambience/thunder_clap.wav^"");
-			// client_cmd(iPlayer, "quit");
-			console_print(iPlayer, "You quited");
 		}
 		
 		show_activity_key("AMX_SUPER_QUIT_TEAM_CASE1", "AMX_SUPER_QUIT_TEAM_CASE2", AdminName, g_TeamNames[Team]);
