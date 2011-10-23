@@ -59,12 +59,10 @@
 	
 	10/20/2011		Drekes
 	@ Fixed alltalk menu not closing when supermenu_func is 0.
-	@ Added Cvar to keep menu's open after pressing key. 
-		Applied to:
-		- Alltalk menu.
 	
-	To Do:
-	
+	10/23/2011		Drekes
+	@ Fixed drug menu not drugging.
+	@ Fixed slay menu displaying wrong ml key.
 */
 #pragma semicolon 1
 
@@ -110,7 +108,7 @@ enum
 	maxvalue
 }
 
-new g_mainmenu, g_alltalkmenu, g_extendmenu, g_gravitymenu, menufunc, hidemenu;
+new g_mainmenu, g_alltalkmenu, g_extendmenu, g_gravitymenu, menufunc;
 new g_menuPosition[33], g_menuPlayers[33][35], g_menuPlayersNum[33], g_menuProperties[33], g_menuProperties2[33], g_menuPlayerName[33][32], g_menu[33];
 new menuname[64];
 new allkeys = MENU_KEY_0|MENU_KEY_1|MENU_KEY_2|MENU_KEY_3|MENU_KEY_4|MENU_KEY_5|MENU_KEY_6|MENU_KEY_7|MENU_KEY_8|MENU_KEY_9;
@@ -133,7 +131,7 @@ new menuCmd[][128] =
 	"amx_uberslap ^"%s^"",
 	"amx_revive ^"%s^"",
 	"amx_quit ^"%s^"",
-	"amx_drug ^"%s^"",
+	"amx_drug ^"%s^" 1",
 	"amx_teamswap",
 	"amx_heal ^"%s^" %d",
 	"amx_armor ^"%s^" %d",
@@ -222,8 +220,6 @@ public plugin_init()
 	register_concmd("amx_supermenu", "handle_cmd", ADMIN_MENU, " - Bring up the menu for AMX_Super");
 	register_concmd("supermenu_edit", "handle_cmd", ADMIN_MENU, " - Allows you to edit the values the menu displays");
 	register_concmd("amx_supermenu_edit", "handle_cmd", ADMIN_MENU, " - Allows you to edit the values the menu displays");
-	
-	hidemenu = register_cvar("supermenu_hide_menu", "0");	// Hides menu after selecting a choice
 	
 	arrayset(accessLevel, -2, maxvalue);
 	valueArray = ArrayCreate(1, maxvalue);
@@ -537,10 +533,7 @@ public mainMenu(id, menu, item)
 }
 
 public alltalkMenu(id, menu, item)
-{
-	if(!get_pcvar_num(hidemenu))
-		menu_display(id, g_alltalkmenu, 0);
-		
+{		
 	if (item == MENU_EXIT)
 	{	
 		if(get_pcvar_num(menufunc))
@@ -912,7 +905,10 @@ displayPlayer2Menu(id, pos, menu)
 		case bury, unbury: len += format(menuBody[len], 1023-len, "\r8. \w%L", id, (g_menuProperties[id]) ? "AMXSUPER_BURY" : "AMXSUPER_UNBURY");
 		case slay:
 		{
-			format(key, charsmax(key), "AMXSUPER_SLAY%d", g_menuProperties[id]);
+			if(!g_menuProperties[id])
+				g_menuProperties[id] = 1;
+				
+			formatex(key, charsmax(key), "AMXSUPER_SLAY%d", g_menuProperties[id]);
 			len += format(menuBody[len], 1023-len, "\r8. \w%L", id, key);
 		}
 		case god, noclip, speed, unammo:
