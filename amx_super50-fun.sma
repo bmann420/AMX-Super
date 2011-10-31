@@ -443,7 +443,7 @@ public CmdHeal(id, level, cid)
 				continue;
 			}
 			
-			set_user_health(Tempid, get_user_health(Tempid) + iHealth);
+			set_user_health(Tempid, iHealth);
 		}
 		
 		show_activity_key("AMX_SUPER_HEAL_TEAM_CASE1", "AMX_SUPER_HEAL_TEAM_CASE2", AdminName, iHealth, g_TeamNames[Team]);
@@ -456,7 +456,7 @@ public CmdHeal(id, level, cid)
 		
 		if(Tempid)
 		{
-			set_user_health(Tempid, get_user_health(Tempid) + iHealth);
+			set_user_health(Tempid, iHealth);
 			
 			new PlayerAuth[35];
 			get_user_authid(Tempid, PlayerAuth, charsmax(PlayerAuth));
@@ -2601,7 +2601,7 @@ public CmdRevive(id, level, cid)
 			}
 			
 			//ExecuteHam(Ham_Spawn, players[i]);
-			// should we use Ham_CS_RoundRespawn ¿? Don't know, but modified to ExecuteHamB
+			// should we use Ham_CS_RoundRespawn ï¿½? Don't know, but modified to ExecuteHamB
 			// ExecuteHamB(Ham_Spawn, players[i])
 		}
 		show_activity_key("AMX_SUPER_REVIVE_TEAM_CASE1", "AMX_SUPER_REVIVE_TEAM_CASE2", name, g_TeamNames[Team])
@@ -2615,7 +2615,7 @@ public CmdRevive(id, level, cid)
 		if(!player)
 			return PLUGIN_HANDLED
 
-		// should we use Ham_CS_RoundRespawn ¿? Don't know, but modified to ExecuteHamB
+		// should we use Ham_CS_RoundRespawn ï¿½? Don't know, but modified to ExecuteHamB
 		//ExecuteHam(Ham_Spawn, player)
 		ExecuteHamB(Ham_Spawn, player)
 		
