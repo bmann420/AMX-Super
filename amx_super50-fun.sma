@@ -45,6 +45,9 @@
 	
 	Drekes		06/23/2010
 	- Fixed ADMIN_IMMUNITY issues.
+
+	DarkGod		10/31/2011
+	- Made amx_heal set health rather than add health (fix).
 */
 
  
